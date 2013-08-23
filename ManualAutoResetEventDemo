@@ -1,0 +1,106 @@
+using System;
+
+
+namespace TestInConsole
+{
+    /*
+  * Created by SharpDevelop.
+  * User: anderslu
+  * Date: 2013/8/23
+  * Time: 14:44
+  * 
+  * To change this template use Tools | Options | Coding | Edit Standard Headers.
+  */
+    using System;
+    using System.Threading;
+
+    namespace TestConsole
+    {
+
+        public class EventWaitTest
+        {
+            private string name; //顾客姓名  
+            private static AutoResetEvent eventWait = new AutoResetEvent(false);
+            //private static ManualResetEvent eventWait = new ManualResetEvent(false);  
+            private static AutoResetEvent eventOver = new AutoResetEvent(false);
+            private static int RunSt = 0;
+
+            public EventWaitTest(string name)
+            {
+                this.name = name;
+            }
+
+            public static void Product()
+            {
+                Console.WriteLine("服务员：厨师在做菜呢，两位稍等" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"));
+                Thread.Sleep(2000);
+                Console.WriteLine("服务员：宫爆鸡丁盖饭好了" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"));
+                eventWait.Set();
+               
+                while (true)
+                {
+                    if (eventOver.WaitOne(1000, false))
+                    {
+                        Console.WriteLine("服务员：饭后水果来了" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"));
+                    }
+
+                    if (eventOver.WaitOne(1000, false))
+                    {
+                        Console.WriteLine("服务员：几位请买单" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"));
+                        eventOver.Reset();
+                    }
+                }
+            }
+
+            public void Consume()
+            {
+                while (true)
+                {
+                    if (eventWait.WaitOne(1000, false) )
+                    {
+                        Console.WriteLine(this.name + "----" + RunSt.ToString() + "------");
+                        Console.WriteLine(this.name + "：开始吃宫爆鸡丁盖饭" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"));
+                        Thread.Sleep(1000);
+                        Console.WriteLine(this.name + "：宫爆鸡丁盖饭吃光了" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"));
+
+                        eventWait.Reset(); 
+                        eventOver.Set();  
+
+                        break;
+                    }
+                    else
+                    {
+                        Console.WriteLine(this.name + "：等着上菜无聊先玩会手机游戏" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"));
+                    }
+                }
+            }
+        }
+
+        public class App
+        {
+            public static void Main(string[] args)
+            {
+                EventWaitTest zhangsan = new EventWaitTest("张三");
+                EventWaitTest lisi = new EventWaitTest("李四");
+                EventWaitTest wangwu = new EventWaitTest("王五");
+                EventWaitTest sunliu = new EventWaitTest("孙六");
+                Thread t1 = new Thread(new ThreadStart(zhangsan.Consume));
+                Thread t2 = new Thread(new ThreadStart(lisi.Consume));
+                Thread t3 = new Thread(new ThreadStart(wangwu.Consume));
+                Thread t4 = new Thread(new ThreadStart(sunliu.Consume));
+                Thread t5 = new Thread(new ThreadStart(EventWaitTest.Product));
+
+
+                t5.Start();
+
+                t1.Start();
+                t2.Start();
+                t3.Start();
+                t4.Start();
+
+
+                Console.Read();
+            }
+        }
+    }
+}
